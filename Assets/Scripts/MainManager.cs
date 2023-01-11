@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,17 +12,29 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
-    
+    private static string playerName;
+
     private bool m_Started = false;
     private int m_Points;
+    private static int bestScore;
     
     private bool m_GameOver = false;
 
     
+
     // Start is called before the first frame update
     void Start()
     {
+        if (PersistentPlayerData.bestScore > 0) {
+
+            BestScoreText.text = $"Best Score: {PersistentPlayerData.bestPlayerName}: {PersistentPlayerData.bestScore}";
+
+        }
+
+        playerName = PersistentPlayerData.currentPlayerName;
+        bestScore = PersistentPlayerData.bestScore;
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -70,7 +83,30 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        if (m_Points > bestScore) {
+
+            BestScoreText.text = $"Best Score: {playerName}: {m_Points}";
+            bestScore = m_Points;
+            PersistentPlayerData.bestPlayerName = playerName;
+            PersistentPlayerData.bestScore = bestScore;
+
+            SavePlayerData();
+        }
+
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
+
+    public void SavePlayerData()
+    {
+        SaveData data = new SaveData();
+        data.playerName = PersistentPlayerData.bestPlayerName;
+        data.bestScore = bestScore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+   
 }
